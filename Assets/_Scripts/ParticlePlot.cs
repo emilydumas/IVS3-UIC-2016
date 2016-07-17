@@ -30,10 +30,19 @@ public class ParticlePlot : MonoBehaviour
 
     public float RotationSpeed = .05f;
 
+    public Mesh mesh;
+    public Material material;
+    public GameObject s3meshsystem;
+
+
+
 
 
     public void Start()
     {
+        
+
+
         _dataPlot = LoadJson.Instance.Load(_jsonData.text);
         _particles = new Particle[_dataPlot.Particles.Length];
         _particleSystem = GetComponent<ParticleSystem>();
@@ -49,19 +58,30 @@ public class ParticlePlot : MonoBehaviour
         for (int index = 0; index < _dataPlot.Particles.Length; index++)
         {
             var p = _dataPlot.Particles[index];
-            
+
             var normal = new Vector4(p.Position.x, p.Position.y, p.Position.z, p.Position.w);
             normal.Normalize();
 
-            _particles[index] = new Particle()
-            {
-                position = normal.StereographicProjection(),
-                color = p.Color,
-                size = p.Size
-            };
+          var newObj = new GameObject();
+          newObj.name = index.ToString();
+          newObj.transform.parent = s3meshsystem.transform;
+          newObj.AddComponent<MeshFilter>().mesh = mesh;
+          newObj.AddComponent<MeshRenderer>().material = material;
+          newObj.GetComponent<Renderer>().material.color = p.Color;
+          newObj.transform.localScale = new Vector3(p.Size, p.Size, p.Size);
+          newObj.transform.position = normal.StereographicProjection();
+
+
+
+            // _particles[index] = new Particle()
+            // {
+            //     position = normal.StereographicProjection(),
+            //     color = p.Color,
+            //     size = p.Size
+            // };
         }
 
-        _particleSystem.SetParticles(_particles, _particles.Length);
+      //  _particleSystem.SetParticles(_particles, _particles.Length);
 
         //SelectFile.Instance.FileSelected += CreatePoints;
 
@@ -70,29 +90,29 @@ public class ParticlePlot : MonoBehaviour
         _zPos.text = "0";
     }
 
-    public void CreatePoints(string filePath)
-    {
-        _infoText.text = "Hit Me 1";
-        _dataPlot = LoadJson.Instance.LoadFromFile(filePath);
-        _particles = new Particle[_dataPlot.Particles.Length];
-
-        for (int index = 0; index < _dataPlot.Particles.Length; index++)
-        {
-            var p = _dataPlot.Particles[index];
-
-            var normal = new Vector4(p.Position.x, p.Position.y, p.Position.z, p.Position.w);
-            normal.Normalize();
-
-            _particles[index] = new Particle()
-            {
-                position = normal.StereographicProjection(),
-                color = p.Color,
-                size = p.Size
-            };
-        }
-
-        _particleSystem.SetParticles(_particles, _particles.Length);
-    }
+    // public void CreatePoints(string filePath)
+    // {
+    //     _infoText.text = "Hit Me 1";
+    //     _dataPlot = LoadJson.Instance.LoadFromFile(filePath);
+    //     _particles = new Particle[_dataPlot.Particles.Length];
+    //
+    //     for (int index = 0; index < _dataPlot.Particles.Length; index++)
+    //     {
+    //         var p = _dataPlot.Particles[index];
+    //
+    //         var normal = new Vector4(p.Position.x, p.Position.y, p.Position.z, p.Position.w);
+    //         normal.Normalize();
+    //
+    //         _particles[index] = new Particle()
+    //         {
+    //             position = normal.StereographicProjection(),
+    //             color = p.Color,
+    //             size = p.Size
+    //         };
+    //     }
+    //
+    //     _particleSystem.SetParticles(_particles, _particles.Length);
+    // }
 
     public void Update()
     {
@@ -127,10 +147,16 @@ public class ParticlePlot : MonoBehaviour
                 var p = _dataPlot.Particles[index];
 
                 var rot = _rotations[0] * p.Position * _rotations[1];
-                
-                _particles[index].position = rot.StereographicProjection();
-                _particles[index].size = p.Size * ParticleSize;
-                _particles[index].color = p.Color;
+
+
+                // s3meshsystem.transform.position = rot.StereographicProjection();
+                // s3meshsystem.transform.localScale += new Vector3(p.Size * ParticleSize, p.Size * ParticleSize, p.Size * ParticleSize);
+              // var tempRend = GameObject.Find(index.ToString());
+              //  tempRend.GetComponent<MeshRenderer>().material.color = p.color;
+
+                // _particles[index].position = rot.StereographicProjection();
+                // _particles[index].size = p.Size * ParticleSize;
+                // _particles[index].color = p.Color;
             }
         }
         else
@@ -193,7 +219,7 @@ public class ParticlePlot : MonoBehaviour
         for (int i = 0; i < _dataPlot.Properties.Length; ++i)
         {
             var prop = _dataPlot.Properties[i];
-            
+
 
             sb.Append(prop.Name + ": ");
 
