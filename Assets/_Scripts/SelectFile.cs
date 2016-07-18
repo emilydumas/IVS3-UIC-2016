@@ -46,6 +46,8 @@ public class SelectFile : MonoBehaviour
         fb.searchRecursively = true;
     }
 
+
+//this calls CreatePoints from ParticlePlot to load the next JSON file
     void OnGUI()
     {
         if (!_menuIsShowing) return;
@@ -55,7 +57,7 @@ public class SelectFile : MonoBehaviour
             if (fb.outputFile != null)
             {
                 //OnFileSelected(fb.outputFile.ToString());
-                //GameObject.FindGameObjectWithTag("Player").GetComponent<ParticlePlot>().CreatePoints(fb.outputFile.FullName);
+                GameObject.FindGameObjectWithTag("Player").GetComponent<ParticlePlot>().CreatePoints(fb.outputFile.FullName);
             }
 
             _menuIsShowing = false;

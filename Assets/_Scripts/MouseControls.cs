@@ -16,9 +16,9 @@ public class MouseControls : MonoBehaviour
 	Cursor.visible = false;
 	// keep it in the game window
 	Cursor.lockState = CursorLockMode.Locked;
-
+	
 	}
-
+	
 	// Update is called once per frame
 	void Update ()
     {
@@ -30,7 +30,6 @@ public class MouseControls : MonoBehaviour
 	    if (!rotate) return;
 
 	    if (Input.GetKeyDown(KeyCode.Escape))
-
 	{
 		Application.Quit();
 	}
@@ -49,10 +48,10 @@ public class MouseControls : MonoBehaviour
 		Cursor.visible = true;
 	}
 
-      //   float dx = Input.GetAxis("Mouse X");
-      //   float dy = -Input.GetAxis("Mouse Y");
-      //
-      //   transform.Rotate(Vector3.right, dy * Time.deltaTime * mouseSensitivityY);
-	    // transform.Rotate(Vector3.up, dx*Time.deltaTime*mouseSensitivityX);
+        float dx = Input.GetAxis("Mouse X");
+        float dy = -Input.GetAxis("Mouse Y");
+
+        transform.Rotate(Vector3.right, dy * Time.deltaTime * mouseSensitivityY);
+	    transform.Rotate(Vector3.up, dx*Time.deltaTime*mouseSensitivityX);
     }
 }

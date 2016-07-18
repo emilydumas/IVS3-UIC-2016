@@ -30,19 +30,16 @@ public class ParticlePlot : MonoBehaviour
 
     public float RotationSpeed = .05f;
 
+    //these are the public variables for choosing mesh and material for
+    //the mesh System
     public Mesh mesh;
     public Material material;
-    public GameObject s3meshsystem;
-
-
+    public GameObject meshParent;
 
 
 
     public void Start()
     {
-        
-
-
         _dataPlot = LoadJson.Instance.Load(_jsonData.text);
         _particles = new Particle[_dataPlot.Particles.Length];
         _particleSystem = GetComponent<ParticleSystem>();
@@ -62,27 +59,33 @@ public class ParticlePlot : MonoBehaviour
             var normal = new Vector4(p.Position.x, p.Position.y, p.Position.z, p.Position.w);
             normal.Normalize();
 
-          var newObj = new GameObject();
-          newObj.name = index.ToString();
-          newObj.transform.parent = s3meshsystem.transform;
-          newObj.AddComponent<MeshFilter>().mesh = mesh;
-          newObj.AddComponent<MeshRenderer>().material = material;
-          newObj.GetComponent<Renderer>().material.color = p.Color;
-          newObj.transform.localScale = new Vector3(p.Size, p.Size, p.Size);
-          newObj.transform.position = normal.StereographicProjection();
 
-
-
+            //this makes one iteration for each particle in _dataPlot
+            //it passes the new particle information for the Particle
+            //attribute in the JSON file format
             // _particles[index] = new Particle()
             // {
             //     position = normal.StereographicProjection(),
             //     color = p.Color,
             //     size = p.Size
             // };
+
+            //this creates gameobjects and meshes instead of a particle system. the meshes need to be combined!
+            var meshParticle = new GameObject();
+            meshParticle.name = index.ToString();
+            meshParticle.transform.parent = meshParticle.transform;
+            meshParticle.transform.position = normal.StereographicProjection();
+            meshParticle.AddComponent<MeshFilter>().mesh = mesh;
+            meshParticle.AddComponent<MeshRenderer>().material = material;
+            meshParticle.transform.localScale = new Vector3(p.Size, p.Size, p.Size);
+            meshParticle.GetComponent<Renderer>().material.SetColor("_TintColor", p.Color);
+
         }
 
-      //  _particleSystem.SetParticles(_particles, _particles.Length);
+        //this is an important step! it places the array of particles and the number of them into the system
+        //_particleSystem.SetParticles(_particles, _particles.Length);
 
+        //this was commented out by Alex
         //SelectFile.Instance.FileSelected += CreatePoints;
 
         _xPos.text = "0";
@@ -90,29 +93,44 @@ public class ParticlePlot : MonoBehaviour
         _zPos.text = "0";
     }
 
-    // public void CreatePoints(string filePath)
-    // {
-    //     _infoText.text = "Hit Me 1";
-    //     _dataPlot = LoadJson.Instance.LoadFromFile(filePath);
-    //     _particles = new Particle[_dataPlot.Particles.Length];
-    //
-    //     for (int index = 0; index < _dataPlot.Particles.Length; index++)
-    //     {
-    //         var p = _dataPlot.Particles[index];
-    //
-    //         var normal = new Vector4(p.Position.x, p.Position.y, p.Position.z, p.Position.w);
-    //         normal.Normalize();
-    //
-    //         _particles[index] = new Particle()
-    //         {
-    //             position = normal.StereographicProjection(),
-    //             color = p.Color,
-    //             size = p.Size
-    //         };
-    //     }
-    //
-    //     _particleSystem.SetParticles(_particles, _particles.Length);
-    // }
+//this receives a path from SelectFile onclick GUI and passes it to LoadFromFile in LoadJson
+    public void CreatePoints(string filePath)
+    {
+        _infoText.text = "Hit Me 1";
+        _dataPlot = LoadJson.Instance.LoadFromFile(filePath);
+        _particles = new Particle[_dataPlot.Particles.Length];
+
+        for (int index = 0; index < _dataPlot.Particles.Length; index++)
+        {
+            var p = _dataPlot.Particles[index];
+
+            var normal = new Vector4(p.Position.x, p.Position.y, p.Position.z, p.Position.w);
+            normal.Normalize();
+
+            // _particles[index] = new Particle()
+            // {
+            //     position = normal.StereographicProjection(),
+            //     color = p.Color,
+            //     size = p.Size
+            // };
+
+            var meshParticle = new GameObject();
+            meshParticle.name = index.ToString();
+            meshParticle.transform.parent = meshParticle.transform;
+            meshParticle.transform.position = normal.StereographicProjection();
+            meshParticle.AddComponent<MeshFilter>().mesh = mesh;
+            meshParticle.AddComponent<MeshRenderer>().material = material;
+            meshParticle.transform.localScale = new Vector3(p.Size, p.Size, p.Size);
+            meshParticle.GetComponent<Renderer>().material.SetColor("_TintColor", p.Color);
+        }
+
+      //  _particleSystem.SetParticles(_particles, _particles.Length);
+
+      //I added this to copy the initiation version of CreatePoints.. Im not sure what it does
+      _xPos.text = "0";
+      _yPos.text = "0";
+      _zPos.text = "0";
+    }
 
     public void Update()
     {
@@ -142,22 +160,18 @@ public class ParticlePlot : MonoBehaviour
             _rotations[0] = _baseRotation * _rotations[0];
             _rotations[1] = _rotations[1] * _baseRotation;
 
-            for (int index = 0; index < _dataPlot.Particles.Length; index++)
-            {
-                var p = _dataPlot.Particles[index];
-
-                var rot = _rotations[0] * p.Position * _rotations[1];
-
-
-                // s3meshsystem.transform.position = rot.StereographicProjection();
-                // s3meshsystem.transform.localScale += new Vector3(p.Size * ParticleSize, p.Size * ParticleSize, p.Size * ParticleSize);
-              // var tempRend = GameObject.Find(index.ToString());
-              //  tempRend.GetComponent<MeshRenderer>().material.color = p.color;
-
-                // _particles[index].position = rot.StereographicProjection();
-                // _particles[index].size = p.Size * ParticleSize;
-                // _particles[index].color = p.Color;
-            }
+            //this controsl the movement of S3 about the camera and resets the particle
+            //information before being passed to SetParticles at the end of Update
+            // for (int index = 0; index < _dataPlot.Particles.Length; index++)
+            // {
+            //     var p = _dataPlot.Particles[index];
+            //
+            //     var rot = _rotations[0] * p.Position * _rotations[1];
+            //
+            //     _particles[index].position = rot.StereographicProjection();
+            //     _particles[index].size = p.Size * ParticleSize;
+            //     _particles[index].color = p.Color;
+            // }
         }
         else
         {
@@ -207,8 +221,8 @@ public class ParticlePlot : MonoBehaviour
                 _infoText.text = Info(curPoint);
             }
         }
-
-        _particleSystem.SetParticles(_particles, _particles.Length);
+        //this sets the particles every update
+      //  _particleSystem.SetParticles(_particles, _particles.Length);
     }
 
     private string Info(int index)
