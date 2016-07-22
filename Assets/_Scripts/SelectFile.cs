@@ -13,6 +13,8 @@ public class SelectFile : MonoBehaviour
         get { return _instance; }
     }
 
+
+    //this destroys the old particle system, but im not sure how... 
     void Awake()
     {
         if (null == _instance)

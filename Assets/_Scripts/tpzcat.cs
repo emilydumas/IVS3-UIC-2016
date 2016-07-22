@@ -31,18 +31,28 @@ namespace tpzcat
 
             using (FileStream rawstream = File.Open(args[0], FileMode.Open, FileAccess.Read))
                 using (GZipStream decstream = new GZipStream(rawstream, CompressionMode.Decompress))
+
+                // figure out whether it's working.
+                // YES: textreader = new StreamReader(decstream))
+                // NO: textreader = new StreamReader(args[0])
                     using (StreamReader textreader = new StreamReader(decstream))
                         using (JsonTextReader reader = new JsonTextReader(textreader))
                         {
                             // Convert the entire JSON file to a hierarchy of C# objects
                             // and make "obj" the root
                             JObject obj = (JObject)JToken.ReadFrom(reader);
+                            // obj["Enums"]
+                            // obj.x  // retrieve attribute called "x"; x needs to appear in the C# source file
 
                             // Retrieve the attribute names as a list of strings
                             string[] attrs = obj["attributes"].Values<string>().ToArray();
 
                             // Iterate over points
                             foreach (JObject pt in obj["points"]) {
+// Suppose you have an array of string "a", "b", "c"
+// and an array of values like 1, 2, 3
+// and you want to produce a dictionary d where d["a"] == 1, d["b"] == 2
+
                                 // Make a dictionary out of the attributes of this point
                                 var attrdict = Enumerable.Range(0, attrs.Length).ToDictionary(i => attrs[i], i => pt["a"][i]);
                                 // Convert the "v" (=vector) field to an array of doubles

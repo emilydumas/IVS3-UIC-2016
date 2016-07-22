@@ -7,16 +7,15 @@ using Particle = UnityEngine.ParticleSystem.Particle;
 public class ParticlePlot : MonoBehaviour
 {
     private const float _radius = .4f;
-
-    private ParticleSystem _particleSystem;
-    private Particle[] _particles;
     private float _curSize;
+
+    private Point[] _points;
 
     private Quaternion _baseRotation;
     private Vector3 _inV;
     private Quaternion[] _rotations;
 
-    [SerializeField] private TextAsset _jsonData;
+    [SerializeField] private TextAsset _tpzpath;
 
     private DataPlot _dataPlot;
 
@@ -40,9 +39,10 @@ public class ParticlePlot : MonoBehaviour
 
     public void Start()
     {
-        _dataPlot = LoadJson.Instance.Load(_jsonData.text);
-        _particles = new Particle[_dataPlot.Particles.Length];
-        _particleSystem = GetComponent<ParticleSystem>();
+
+        _dataPlot = LoadJson.Instance.LoadFromFile(_tpzpath);
+        _points = new Point[_dataPlot.points.Length];
+
         _camT = Camera.main.transform;
         _baseRotation = Quaternion.identity;
         _rotations = new[] {Quaternion.identity, Quaternion.identity};
@@ -52,23 +52,15 @@ public class ParticlePlot : MonoBehaviour
         _sizeSlider.value = ParticleSize;
 
         //Create Points
-        for (int index = 0; index < _dataPlot.Particles.Length; index++)
+        for (int index = 0; index < _dataPlot.points.Length; index++)
         {
-            var p = _dataPlot.Particles[index];
+            var p = _dataPlot.points[index];
 
-            var normal = new Vector4(p.Position.x, p.Position.y, p.Position.z, p.Position.w);
+            var quat = new Quaternion(p.v[0], p.v[1], p.v[2], p.v[3]);
+            quat.NormalizeQuaternion();
+
+            var normal = new Vector4(quat.x, quat.y, quat.z, quat.w);
             normal.Normalize();
-
-
-            //this makes one iteration for each particle in _dataPlot
-            //it passes the new particle information for the Particle
-            //attribute in the JSON file format
-            // _particles[index] = new Particle()
-            // {
-            //     position = normal.StereographicProjection(),
-            //     color = p.Color,
-            //     size = p.Size
-            // };
 
             //this creates gameobjects and meshes instead of a particle system. the meshes need to be combined!
             var meshParticle = new GameObject();
@@ -77,8 +69,8 @@ public class ParticlePlot : MonoBehaviour
             meshParticle.transform.position = normal.StereographicProjection();
             meshParticle.AddComponent<MeshFilter>().mesh = mesh;
             meshParticle.AddComponent<MeshRenderer>().material = material;
-            meshParticle.transform.localScale = new Vector3(p.Size, p.Size, p.Size);
-            meshParticle.GetComponent<Renderer>().material.SetColor("_TintColor", p.Color);
+            //meshParticle.transform.localScale = new Vector3(p.Size, p.Size, p.Size);
+            //meshParticle.GetComponent<Renderer>().material.SetColor("_TintColor", p.Color);
 
         }
 
@@ -120,8 +112,8 @@ public class ParticlePlot : MonoBehaviour
             meshParticle.transform.position = normal.StereographicProjection();
             meshParticle.AddComponent<MeshFilter>().mesh = mesh;
             meshParticle.AddComponent<MeshRenderer>().material = material;
-            meshParticle.transform.localScale = new Vector3(p.Size, p.Size, p.Size);
-            meshParticle.GetComponent<Renderer>().material.SetColor("_TintColor", p.Color);
+            //meshParticle.transform.localScale = new Vector3(p.Size, p.Size, p.Size);
+            //meshParticle.GetComponent<Renderer>().material.SetColor("_TintColor", p.Color);
         }
 
       //  _particleSystem.SetParticles(_particles, _particles.Length);
@@ -173,90 +165,90 @@ public class ParticlePlot : MonoBehaviour
             //     _particles[index].color = p.Color;
             // }
         }
-        else
-        {
-            var mouseP = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x,
-                Input.mousePosition.y, Camera.main.nearClipPlane));//Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-            var mouseVec = mouseP - _camT.position;
-            mouseVec.Normalize();
-
-            float minDistance = 10000f;
-            int curPoint = -1;
-            for (int index = 0; index < _particles.Length; index++)
-            {
-                var p = _particles[index];
-
-                _particles[index].color = _dataPlot.Particles[index].Color;
-
-                var newVec = p.position - _camT.position;
-
-                var dot = Vector3.Dot(mouseVec, newVec);
-                var magSquared = newVec.sqrMagnitude;
-                var r = _radius * p.size;
-                var radSquared = r * r;
-
-                if (dot * dot >= ((magSquared * magSquared) / (magSquared + radSquared)) && dot > 0)
-                {
-                    if (curPoint == -1)
-                    {
-                        minDistance = Vector3.Distance(_camT.position, p.position);
-                        curPoint = index;
-                    }
-                    else
-                    {
-                        float newDistance = Vector3.Distance(_camT.position, p.position);
-                        if (newDistance < minDistance)
-                        {
-                            minDistance = newDistance;
-                            curPoint = index;
-                        }
-                    }
-                }
-            }
-
-            if (curPoint != -1)
-            {
-                _particles[curPoint].color = Color.white;
-                _infoText.text = Info(curPoint);
-            }
-        }
-        //this sets the particles every update
-      //  _particleSystem.SetParticles(_particles, _particles.Length);
-    }
-
-    private string Info(int index)
-    {
-        StringBuilder sb = new StringBuilder();
-        var particle = _dataPlot.Particles[index];
-
-        for (int i = 0; i < _dataPlot.Properties.Length; ++i)
-        {
-            var prop = _dataPlot.Properties[i];
-
-
-            sb.Append(prop.Name + ": ");
-
-            if(prop.Type < 3)
-                sb.Append(particle.Props[i].ToString() + "\n");
-            else
-            {
-                sb.Append(_dataPlot.Enums[prop.Type - 3].values[TakeOnlyNumbers(particle.Props[i].ToString())] + "\n");
-            }
-        }
-        return sb.ToString();
-    }
-
-    private int TakeOnlyNumbers(string s)
-    {
-        StringBuilder sb= new StringBuilder();
-
-        foreach (char c in s.ToCharArray())
-        {
-            if ((int) c >= 48 && (int) c <= 57)
-                sb.Append(c);
-        }
-
-        return int.Parse(sb.ToString());
-    }
+    //     else
+    //     {
+    //         var mouseP = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x,
+    //             Input.mousePosition.y, Camera.main.nearClipPlane));//Camera.main.ScreenToWorldPoint(Input.mousePosition);
+    //
+    //         var mouseVec = mouseP - _camT.position;
+    //         mouseVec.Normalize();
+    //
+    //         float minDistance = 10000f;
+    //         int curPoint = -1;
+    //         for (int index = 0; index < _particles.Length; index++)
+    //         {
+    //             var p = _particles[index];
+    //
+    //             _particles[index].color = _dataPlot.Particles[index].Color;
+    //
+    //             var newVec = p.position - _camT.position;
+    //
+    //             var dot = Vector3.Dot(mouseVec, newVec);
+    //             var magSquared = newVec.sqrMagnitude;
+    //             var r = _radius * p.size;
+    //             var radSquared = r * r;
+    //
+    //             if (dot * dot >= ((magSquared * magSquared) / (magSquared + radSquared)) && dot > 0)
+    //             {
+    //                 if (curPoint == -1)
+    //                 {
+    //                     minDistance = Vector3.Distance(_camT.position, p.position);
+    //                     curPoint = index;
+    //                 }
+    //                 else
+    //                 {
+    //                     float newDistance = Vector3.Distance(_camT.position, p.position);
+    //                     if (newDistance < minDistance)
+    //                     {
+    //                         minDistance = newDistance;
+    //                         curPoint = index;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //
+    //         if (curPoint != -1)
+    //         {
+    //             _particles[curPoint].color = Color.white;
+    //             _infoText.text = Info(curPoint);
+    //         }
+    //     }
+    //     //this sets the particles every update
+    //   //  _particleSystem.SetParticles(_particles, _particles.Length);
+    // }
+    //
+    // private string Info(int index)
+    // {
+    //     StringBuilder sb = new StringBuilder();
+    //     var particle = _dataPlot.Particles[index];
+    //
+    //     for (int i = 0; i < _dataPlot.Properties.Length; ++i)
+    //     {
+    //         var prop = _dataPlot.Properties[i];
+    //
+    //
+    //         sb.Append(prop.Name + ": ");
+    //
+    //         if(prop.Type < 3)
+    //             sb.Append(particle.Props[i].ToString() + "\n");
+    //         else
+    //         {
+    //             sb.Append(_dataPlot.Enums[prop.Type - 3].values[TakeOnlyNumbers(particle.Props[i].ToString())] + "\n");
+    //         }
+    //     }
+    //     return sb.ToString();
+    // }
+    //
+    // private int TakeOnlyNumbers(string s)
+    // {
+    //     StringBuilder sb= new StringBuilder();
+    //
+    //     foreach (char c in s.ToCharArray())
+    //     {
+    //         if ((int) c >= 48 && (int) c <= 57)
+    //             sb.Append(c);
+    //     }
+    //
+    //     return int.Parse(sb.ToString());
+    // }
 }

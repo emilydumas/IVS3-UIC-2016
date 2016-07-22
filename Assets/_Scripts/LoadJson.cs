@@ -1,87 +1,30 @@
 ﻿using System;
 using UnityEngine;
 using System.Collections;
+using System.Linq;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.IO;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine.UI;
+
+
+
 
 public class DataPlot
 {
-    public string Name { get; set; }
-    public ParticleEnum[] Enums { get; set; }
-    public Property[] Properties { get; set; }
-    public FinalParticle[] Particles { get; set; }
-
-    public DataPlot()
-    {
-        
-    }
-
-    public DataPlot(DataIntermediatePlot dip) ///it looks like many of these things are coming from Newtonsoft.Json library
-    {
-        Name = dip.Name;
-
-        Enums = new ParticleEnum[dip.Enums.Length];
-        dip.Enums.CopyTo(Enums, 0);
-
-        Properties = new Property[dip.Properties.Length];
-        dip.Properties.CopyTo(Properties, 0);
-
-        Particles = new FinalParticle[dip.Particles.Length];
-        for (int index = 0; index < dip.Particles.Length; index++)
-        {
-            var p = dip.Particles[index];
-            Particles[index] = new FinalParticle(p);
-        }
-    }
+    public string[] attributes { get; set; }
+    public Point[] points { get; set; }
 }
 
-public class DataIntermediatePlot 
+public class Point
 {
-    public string Name { get; set; }       
-    public ParticleEnum[] Enums { get; set; } 
-    public Property[] Properties { get; set; }
-    public JsonParticle[] Particles { get; set; }
+    public object[]  a { get; set; }
+    public string[] t { get; set; }
+    public float[] v { get; set; }
 }
 
-public class Property
-{
-    public string Name { get; set; }
-    public int Type { get; set; }
-}
-
-public class ParticleEnum
-{
-    public string[] values { get; set; }
-}
-
-public class JsonParticle
-{
-    public float[] Position { get; set; }
-    public float[] Color { get; set; }
-    public float Size { get; set; }
-    public object[] Props { get; set; }
-}
-
-public class FinalParticle
-{
-    public Quaternion Position { get; set; }
-    public Color Color { get; set; }
-    public float Size { get; set; }
-    public object[] Props { get; set; }
-
-    public FinalParticle(JsonParticle raw)
-    {
-        Position = new Quaternion(raw.Position[0], raw.Position[1], raw.Position[2], raw.Position[3]);
-        Position = Position.NormailzeQuaternion();
-        Color = new Color(raw.Color[0], raw.Color[1], raw.Color[2]);
-        Size = raw.Size;
-        Props = new object[raw.Props.Length];
-        raw.Props.CopyTo(Props, 0);
-    }
-
-}
 
 public class LoadJson
 {
@@ -94,15 +37,16 @@ public class LoadJson
         get { return _instance ?? (_instance = new LoadJson()); }
     }
 
-    public DataPlot Load(string path)
+    // this is called during initialization on ParticlePlots. It converts a JSON
+    // string to a collection of DataPlot objects.
+    public DataPlot Load(string tpzstring)
     {
         DataPlot dataPlot = new DataPlot();
 
         try
         {
-            var inter = JsonConvert.DeserializeObject<DataIntermediatePlot>(path);
-            dataPlot = new DataPlot(inter);
-        }
+            dataPlot = JsonConvert.DeserializeObject<DataPlot>(tpzstring);
+            }
         catch (Exception e)
         {
             Debug.Log(e.Message);
@@ -111,20 +55,24 @@ public class LoadJson
         return dataPlot;
     }
 
+    //this is called when loading a new JSON file.
     public DataPlot LoadFromFile(string path)
     {
         DataPlot dataPlot = new DataPlot();
         GameObject.FindGameObjectWithTag("Finish").GetComponent<Text>().text = "Loading " + path;
-        //using (var reader = new StreamReader(path))
-        //{
-        //    GameObject.FindGameObjectWithTag("Finish").GetComponent<Text>().text = "Loading 1";
-        //    dataPlot = Load(reader.ReadToEnd());
-        //}
-        StreamReader reader = null;
+        StreamReader _reader = null;
         try
         {
-            reader = new StreamReader(path);
-            dataPlot = Load(reader.ReadToEnd());
+          using (FileStream rawstream = File.Open(path, FileMode.Open, FileAccess.Read))
+              using (GZipStream decstream = new GZipStream(rawstream, CompressionMode.Decompress))
+              // figure out whether it's working.
+              // YES: textreader = new StreamReader(decstream))
+              // NO: textreader = new StreamReader(args[0])
+                  using (StreamReader reader = new StreamReader(decstream))
+                      {
+                          dataPlot = Load(reader.ReadToEnd());
+                      }
+
         }
         catch (Exception e)
         {
@@ -132,8 +80,8 @@ public class LoadJson
         }
         finally
         {
-            if (reader != null)
-                reader.Dispose();
+            if (_reader != null)
+                _reader.Dispose();
         }
         return dataPlot;
     }
