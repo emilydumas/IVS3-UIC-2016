@@ -39,50 +39,48 @@ public class LoadJson
 
     // this is called during initialization on ParticlePlots. It converts a JSON
     // string to a collection of DataPlot objects.
-    public DataPlot Load(string tpzstring)
-    {
-        DataPlot dataPlot = new DataPlot();
-
-        try
-        {
-            dataPlot = JsonConvert.DeserializeObject<DataPlot>(tpzstring);
-            }
-        catch (Exception e)
-        {
-            Debug.Log(e.Message);
-        }
-
-        return dataPlot;
-    }
+    // public DataPlot Load(string tpcstring)
+    // {
+    //     DataPlot dataPlot = new DataPlot();
+    //
+    //     try
+    //     {
+    //       var serializer = new JsonSerializer();
+    //       using (var tr = new JsonTextReader(new StreamReader(PATH)))
+    //       {
+    //         return serializer.Deserialize<DataPlot>(tr);
+    //       }
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         Debug.Log(e.Message);
+    //     }
+    //     dataPlot = serializer;
+    //     return dataPlot;
+    // }
 
     //this is called when loading a new JSON file.
     public DataPlot LoadFromFile(string path)
     {
         DataPlot dataPlot = new DataPlot();
-        GameObject.FindGameObjectWithTag("Finish").GetComponent<Text>().text = "Loading " + path;
-        StreamReader _reader = null;
+        var serializer = new JsonSerializer();
+
         try
         {
           using (FileStream rawstream = File.Open(path, FileMode.Open, FileAccess.Read))
               using (GZipStream decstream = new GZipStream(rawstream, CompressionMode.Decompress))
-              // figure out whether it's working.
-              // YES: textreader = new StreamReader(decstream))
-              // NO: textreader = new StreamReader(args[0])
-                  using (StreamReader reader = new StreamReader(decstream))
-                      {
-                          dataPlot = Load(reader.ReadToEnd());
-                      }
+                using (var tr = new JsonTextReader(new StreamReader(decstream)))
+                  {
+                    return serializer.Deserialize<DataPlot>(tr);
+                  }
 
         }
         catch (Exception e)
         {
-            GameObject.FindGameObjectWithTag("Finish").GetComponent<Text>().text = e.Message;
+          Debug.Log(e.Message);
         }
-        finally
-        {
-            if (_reader != null)
-                _reader.Dispose();
-        }
+
+        Debug.Log(serializer);
         return dataPlot;
     }
 }

@@ -49,7 +49,7 @@ namespace tpzcat
 
                             // Iterate over points
                             foreach (JObject pt in obj["points"]) {
-// Suppose you have an array of string "a", "b", "c"
+// Suppose you have an array of string "a", "t", "v"
 // and an array of values like 1, 2, 3
 // and you want to produce a dictionary d where d["a"] == 1, d["b"] == 2
 
