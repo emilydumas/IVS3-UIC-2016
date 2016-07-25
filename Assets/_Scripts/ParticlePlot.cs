@@ -1,8 +1,13 @@
-﻿using UnityEngine;
+using System;
+using UnityEngine;
 using System.Collections;
-using System.Text;
+using System.Linq;
+using System.Collections.Generic;
+using System.IO.Compression;
+using System.IO;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine.UI;
-using Particle = UnityEngine.ParticleSystem.Particle;
 
 public class ParticlePlot : MonoBehaviour
 {
@@ -40,7 +45,7 @@ public class ParticlePlot : MonoBehaviour
 
     public void Start()
     {
-
+        CreatePoints(@"C:\Users\pgb\Desktop\VR_ISV3\Assets\Data\vecs-depth8.tpz");
         //
         //  _dataPlot = LoadJson.Instance.LoadFromFile();
         //  _points = new object[_dataPlot.points.Length];
@@ -84,8 +89,10 @@ public class ParticlePlot : MonoBehaviour
     public void CreatePoints(string filePath)
     {
         _infoText.text = "Hit Me 1";
-        _dataPlot = LoadJson.Instance.LoadFromFile(filePath);
-        _points = new Point[_dataPlot.points.Length];
+        _dataPlot = LoadJson.Instance.LoadFromFile(@"C:\Users\pgb\Desktop\VR_ISV3\Assets\Data\vecs-depth8.tpz");
+        Debug.Log("This will print to console. The error will be thrown afterwards.");
+        _points = new object[_dataPlot.points.Length];
+        Debug.Log("This will not print to console.");
 
         for (int index = 0; index < _dataPlot.points.Length; index++)
         {

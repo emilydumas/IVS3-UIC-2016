@@ -71,7 +71,9 @@ public class LoadJson
               using (GZipStream decstream = new GZipStream(rawstream, CompressionMode.Decompress))
                 using (var tr = new JsonTextReader(new StreamReader(decstream)))
                   {
-                    return serializer.Deserialize<DataPlot>(tr);
+                    dataPlot = serializer.Deserialize<DataPlot>(tr);
+                    //ADDED THIS TO SEE OUTPUT, DOES NOT SHOW IN CONSOLE
+                    Debug.Log(dataPlot.attributes[0]);
                   }
 
         }
@@ -80,7 +82,7 @@ public class LoadJson
           Debug.Log(e.Message);
         }
 
-        Debug.Log(serializer);
+
         return dataPlot;
     }
 }
