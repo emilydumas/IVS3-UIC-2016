@@ -3,7 +3,7 @@ using UnityEngine;
 using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
-using System.IO.Compression;
+using Unity.IO.Compression;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -20,7 +20,7 @@ public class DataPlot
 
 public class Point
 {
-    public object[]  a { get; set; }
+    public string[]  a { get; set; } // TODO: What will it do if the attribute is a composite like an object?
     public string[] t { get; set; }
     public float[] v { get; set; }
 }
@@ -65,23 +65,13 @@ public class LoadJson
         DataPlot dataPlot = new DataPlot();
         var serializer = new JsonSerializer();
 
-        try
-        {
-          using (FileStream rawstream = File.Open(path, FileMode.Open, FileAccess.Read))
-              using (GZipStream decstream = new GZipStream(rawstream, CompressionMode.Decompress))
-                using (var tr = new JsonTextReader(new StreamReader(decstream)))
-                  {
-                    dataPlot = serializer.Deserialize<DataPlot>(tr);
-                    //ADDED THIS TO SEE OUTPUT, DOES NOT SHOW IN CONSOLE
-                    Debug.Log(dataPlot.attributes[0]);
-                  }
 
-        }
-        catch (Exception e)
-        {
-          Debug.Log(e.Message);
-        }
-
+        using (FileStream rawstream = File.Open(path, FileMode.Open, FileAccess.Read))
+          using (GZipStream decstream = new GZipStream(rawstream, CompressionMode.Decompress))
+            using (var tr = new JsonTextReader(new StreamReader(decstream)))
+            {
+              dataPlot = serializer.Deserialize<DataPlot>(tr);
+            }
 
         return dataPlot;
     }

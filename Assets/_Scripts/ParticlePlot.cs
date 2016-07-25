@@ -3,10 +3,6 @@ using UnityEngine;
 using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
-using System.IO.Compression;
-using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using UnityEngine.UI;
 
 public class ParticlePlot : MonoBehaviour
@@ -37,86 +33,54 @@ public class ParticlePlot : MonoBehaviour
 
     //these are the public variables for choosing mesh and material for
     //the mesh System
-    public Mesh mesh;
-    public Material material;
+    public Mesh sphereMesh;
+    public Material sphereMaterial;
     public GameObject meshParent;
 
 
 
     public void Start()
     {
-        CreatePoints(@"C:\Users\pgb\Desktop\VR_ISV3\Assets\Data\vecs-depth8.tpz");
-        //
-        //  _dataPlot = LoadJson.Instance.LoadFromFile();
-        //  _points = new object[_dataPlot.points.Length];
-        //
-        // _camT = Camera.main.transform;
-        // _baseRotation = Quaternion.identity;
-        // _rotations = new[] {Quaternion.identity, Quaternion.identity};
-        //
-        // _inV = Vector3.zero;
-        //
-        // _sizeSlider.value = ParticleSize;
-        //
-        // //Create Points
-        // for (int index = 0; index < _dataPlot.points.Length; index++)
-        // {
-        //     var p = _dataPlot.points[index];
-        //
-        //     var quat = new Quaternion(p.v[0], p.v[1], p.v[2], p.v[3]);
-        //
-        //     var normal = new Vector4(quat.x, quat.y, quat.z, quat.w);
-        //     normal.Normalize();
-        //
-        //     //this creates gameobjects and meshes instead of a particle system. the meshes need to be combined!
-        //     var meshParticle = new GameObject();
-        //     meshParticle.name = index.ToString();
-        //     meshParticle.transform.parent = meshParticle.transform;
-        //     meshParticle.transform.position = normal.StereographicProjection();
-        //     meshParticle.AddComponent<MeshFilter>().mesh = mesh;
-        //     meshParticle.AddComponent<MeshRenderer>().material = material;
-        //     //meshParticle.transform.localScale = new Vector3(p.Size, p.Size, p.Size);
-        //     meshParticle.GetComponent<Renderer>().material.SetColor("_TintColor", Color.white);
-        //
-        // }
-        //
-        // _xPos.text = "0";
-        // _yPos.text = "0";
-        // _zPos.text = "0";
+        CreateSpheres(@"Assets\Data\vecs-depth8.tpz");
+
+        _xPos.text = "0";
+        _yPos.text = "0";
+        _zPos.text = "0";
     }
 
 //this receives a path from SelectFile onclick GUI and passes it to LoadFromFile in LoadJson
-    public void CreatePoints(string filePath)
+    public void CreateSpheres(string filePath)
     {
-        _infoText.text = "Hit Me 1";
-        _dataPlot = LoadJson.Instance.LoadFromFile(@"C:\Users\pgb\Desktop\VR_ISV3\Assets\Data\vecs-depth8.tpz");
-        Debug.Log("This will print to console. The error will be thrown afterwards.");
-        _points = new object[_dataPlot.points.Length];
-        Debug.Log("This will not print to console.");
+        _infoText.text = "Loading...";
+        _dataPlot = LoadJson.Instance.LoadFromFile(filePath);
 
-        for (int index = 0; index < _dataPlot.points.Length; index++)
+        int lengthIndex = Array.IndexOf(_dataPlot.attributes,"length");
+
+        int i=0;
+        foreach (var p in _dataPlot.points)
         {
-            var p = _dataPlot.points[index];
-
-            var quat = new Quaternion(p.v[0], p.v[1], p.v[2], p.v[3]);
-
-            var normal = new Vector4(quat.x, quat.y, quat.z, quat.w);
+            double L = Convert.ToDouble(p.a[lengthIndex]);
+            float R = (float)(Math.Pow(L,-1.2) * _sizeSlider.value);
+            var normal = new Vector4(p.v[0],p.v[1],p.v[2],p.v[3]);
             normal.Normalize();
 
             var meshParticle = new GameObject();
-            meshParticle.name = index.ToString();
-            meshParticle.transform.parent = meshParticle.transform;
+            meshParticle.name = String.Format("Sphere {0}",i);
+            meshParticle.transform.parent = meshParent.transform;
             meshParticle.transform.position = normal.StereographicProjection();
-            meshParticle.AddComponent<MeshFilter>().mesh = mesh;
-            meshParticle.AddComponent<MeshRenderer>().material = material;
-            //meshParticle.transform.localScale = new Vector3(p.Size, p.Size, p.Size);
+            meshParticle.AddComponent<MeshFilter>().mesh = sphereMesh;
+            meshParticle.AddComponent<MeshRenderer>().material = sphereMaterial;
+            meshParticle.transform.localScale = new Vector3(R,R,R);
             meshParticle.GetComponent<Renderer>().material.SetColor("_TintColor", Color.white);
+            i++;
         }
-
+        _infoText.text = "";
     }
 
     public void Update()
     {
+           // TODO: Make new update code
+
 //         // ParticleSize = _sizeSlider.value;
 //         //
 //         // int xpos = (int)_camT.position.x;

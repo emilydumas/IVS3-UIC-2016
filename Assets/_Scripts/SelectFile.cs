@@ -59,7 +59,7 @@ public class SelectFile : MonoBehaviour
             if (fb.outputFile != null)
             {
                 //OnFileSelected(fb.outputFile.ToString());
-                GameObject.FindGameObjectWithTag("Player").GetComponent<ParticlePlot>().CreatePoints(fb.outputFile.FullName);
+                GameObject.FindGameObjectWithTag("Player").GetComponent<ParticlePlot>().CreateSpheres(fb.outputFile.FullName);
             }
 
             _menuIsShowing = false;
