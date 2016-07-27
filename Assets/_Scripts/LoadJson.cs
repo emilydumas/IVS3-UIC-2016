@@ -37,27 +37,6 @@ public class LoadJson
         get { return _instance ?? (_instance = new LoadJson()); }
     }
 
-    // this is called during initialization on ParticlePlots. It converts a JSON
-    // string to a collection of DataPlot objects.
-    // public DataPlot Load(string tpcstring)
-    // {
-    //     DataPlot dataPlot = new DataPlot();
-    //
-    //     try
-    //     {
-    //       var serializer = new JsonSerializer();
-    //       using (var tr = new JsonTextReader(new StreamReader(PATH)))
-    //       {
-    //         return serializer.Deserialize<DataPlot>(tr);
-    //       }
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         Debug.Log(e.Message);
-    //     }
-    //     dataPlot = serializer;
-    //     return dataPlot;
-    // }
 
     //this is called when loading a new JSON file.
     public DataPlot LoadFromFile(string path)
@@ -65,13 +44,28 @@ public class LoadJson
         DataPlot dataPlot = new DataPlot();
         var serializer = new JsonSerializer();
 
+        if(path.EndsWith("tpz"))
+        {
+          using (FileStream rawstream = File.Open(path, FileMode.Open, FileAccess.Read))
+            using (GZipStream decstream = new GZipStream(rawstream, CompressionMode.Decompress))
+              using (var tr = new JsonTextReader(new StreamReader(decstream)))
+              {
+                dataPlot = serializer.Deserialize<DataPlot>(tr);
+              }
+        }
+        else if (path.EndsWith("tpc"))
+        {
+          using (var tr = new JsonTextReader(new StreamReader(path)))
+          {
+            dataPlot = serializer.Deserialize<DataPlot>(tr);
+          }
+        }
+        else
+        {
+            GameObject.FindGameObjectWithTag("Player").GetComponent<ParticlePlot>()._infoText.text = "Please submit TPZ or TPC file format." ;
+        }
 
-        using (FileStream rawstream = File.Open(path, FileMode.Open, FileAccess.Read))
-          using (GZipStream decstream = new GZipStream(rawstream, CompressionMode.Decompress))
-            using (var tr = new JsonTextReader(new StreamReader(decstream)))
-            {
-              dataPlot = serializer.Deserialize<DataPlot>(tr);
-            }
+
 
         return dataPlot;
     }

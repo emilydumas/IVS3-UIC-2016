@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using UnityEngine;
 using System.Collections;
 using System.Linq;
@@ -16,7 +17,8 @@ public class ParticlePlot : MonoBehaviour
     private Vector3 _inV;
     private Quaternion[] _rotations;
 
-    [SerializeField] private TextAsset _tpzpath;
+    public string defaultTPZ; //this value is assigned in the Unity Editor window under the
+                              // ParticlePlot property of Particles gameObject
 
 
     private DataPlot _dataPlot;
@@ -27,7 +29,7 @@ public class ParticlePlot : MonoBehaviour
 
     [SerializeField] private Slider _sizeSlider;
     [SerializeField] private InputField _xPos, _yPos, _zPos;
-    [SerializeField] private Text _infoText;
+    [SerializeField] public Text _infoText;
 
     public float RotationSpeed = .05f;
 
@@ -41,7 +43,10 @@ public class ParticlePlot : MonoBehaviour
 
     public void Start()
     {
-        CreateSpheres(@"Assets\Data\vecs-depth8.tpz");
+      if(File.Exists(defaultTPZ))
+      {
+        CreateSpheres(defaultTPZ);
+      }
 
         _xPos.text = "0";
         _yPos.text = "0";
