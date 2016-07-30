@@ -37,8 +37,8 @@ public class ParticlePlot : MonoBehaviour
     //the mesh System
     public Mesh sphereMesh;
     public Material sphereMaterial;
+    public GameObject[] respawn;
     public GameObject meshParent;
-
 
 
     public void Start()
@@ -71,7 +71,8 @@ public class ParticlePlot : MonoBehaviour
 
             var meshParticle = new GameObject();
             meshParticle.name = String.Format("Sphere {0}",i);
-            meshParticle.transform.parent = meshParent.transform;
+
+            meshParticle.transform.SetParent(meshParent.transform);
             meshParticle.transform.position = normal.StereographicProjection();
             meshParticle.AddComponent<MeshFilter>().mesh = sphereMesh;
             meshParticle.AddComponent<MeshRenderer>().material = sphereMaterial;
@@ -80,7 +81,35 @@ public class ParticlePlot : MonoBehaviour
             i++;
         }
         _infoText.text = "";
+        combineMeshes(meshParent);
     }
+
+    public void combineMeshes(GameObject obj)
+  {
+    //Zero transformation is needed because of localToWorldMatrix transform
+    Vector3 position = obj.transform.position;
+    obj.transform.position = Vector3.zero;
+
+    //whatever man
+    MeshFilter[] meshFilters = GetComponentsInChildren<MeshFilter>();
+    CombineInstance[] combine = new CombineInstance[meshFilters.Length];
+    int i = 0;
+    while (i < meshFilters.Length) {
+        combine[i].mesh = meshFilters[i].sharedMesh;
+        combine[i].transform = meshFilters[i].transform.localToWorldMatrix;
+        meshFilters[i].gameObject.SetActive(false);
+        i++;
+    }
+    obj.transform.GetComponent<MeshFilter>().mesh = new Mesh();
+    obj.transform.GetComponent<MeshFilter>().mesh.CombineMeshes(combine, true, true);
+    obj.transform.gameObject.SetActive(true);
+
+    //Reset position
+    obj.transform.position = position;
+
+    //Adds collider to mesh
+    obj.AddComponent<MeshCollider> ();
+  }
 
     public void Update()
     {
